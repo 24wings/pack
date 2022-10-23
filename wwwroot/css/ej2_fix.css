@@ -1,0 +1,5 @@
+/* ej2 fix */
+
+.e-dialog {
+    min-height:500px;
+}

@@ -1,0 +1,253 @@
+﻿@page "/"
+@using Syncfusion.Blazor.Grids;
+@using Syncfusion.Blazor.Diagram
+
+@using System.Collections.ObjectModel
+
+
+<PageTitle>Index</PageTitle>
+<span class="pageheader">Selected Controls</span>
+<br />
+<p class="pagecontent">The following Syncfusion Blazor components can be set up in an application for you with the Syncfusion Blazor Template Studio. A fast, easy start with Syncfusion Blazor components lets you concentrate on the important part: learning.</p>
+<div class="controlregion">
+
+ <h5 class="productheader"> Grids</h5>
+<ul class="ulstyle">
+	<li class="list">
+ 	<NavLink class="nav-link" href="datagrid-features">
+ 	<span class="syncfusion-blazor-index-icons syncfusion-blazor-icon-datagrid" aria-hidden="true"></span>DataGrid
+ 	</NavLink>
+ 	</li>
+	<li class="list">
+ 	<NavLink class="nav-link" href="pivottable-features">
+ 	<span class="syncfusion-blazor-index-icons syncfusion-blazor-icon-pivottable" aria-hidden="true"></span>Pivot Table
+ 	</NavLink>
+ 	</li>
+	<li class="list">
+ 	<NavLink class="nav-link" href="treegrid-features">
+ 	<span class="syncfusion-blazor-index-icons syncfusion-blazor-icon-treegrid" aria-hidden="true"></span>Tree Grid
+ 	</NavLink>
+ 	</li>
+
+</ul>
+ <h5 class="productheader"> Data Visualization</h5>
+<ul class="ulstyle">
+	<li class="list">
+ 	<NavLink class="nav-link" href="charts-features">
+ 	<span class="syncfusion-blazor-index-icons syncfusion-blazor-icon-charts" aria-hidden="true"></span>Charts
+ 	</NavLink>
+ 	</li>
+	<li class="list">
+ 	<NavLink class="nav-link" href="stockchart-features">
+ 	<span class="syncfusion-blazor-index-icons syncfusion-blazor-icon-stockchart" aria-hidden="true"></span>Stock Chart
+ 	</NavLink>
+ 	</li>
+	<li class="list">
+ 	<NavLink class="nav-link" href="circulargauge-features">
+ 	<span class="syncfusion-blazor-index-icons syncfusion-blazor-icon-circulargauge" aria-hidden="true"></span>Circular Gauge
+ 	</NavLink>
+ 	</li>
+
+</ul>
+
+</div>
+
+<SfDiagramComponent @ref="@diagram" Connectors="@connectors" Height="700px" Nodes="@nodes" />
+
+@code
+{
+    SfDiagramComponent diagram;
+    int connectorCount = 0;
+    //Defines Diagram's nodes collection.
+    DiagramObjectCollection<Node> nodes = new DiagramObjectCollection<Node>();
+    //Defines Diagram's connectors collection.
+    DiagramObjectCollection<Connector> connectors = new DiagramObjectCollection<Connector>();
+
+
+
+    private void InitDiagramModel()
+    {
+        CreateNode("Start", 300, 50, NodeFlowShapes.Terminator, "Start");
+        CreateNode("Init", 300, 140, NodeFlowShapes.Process, "var i = 0");
+        CreateNode("Condition", 300, 230, NodeFlowShapes.Decision, "i < 10?");
+        CreateNode("Print", 300, 320, NodeFlowShapes.PreDefinedProcess, "print(\'Hello!!\');");
+        CreateNode("Increment", 300, 410, NodeFlowShapes.Process, "i++;");
+        CreateNode("End", 300, 500, NodeFlowShapes.Terminator, "End");
+        // Creates orthogonal connector.
+        OrthogonalSegment segment1 = new OrthogonalSegment()
+            {
+                Type = ConnectorSegmentType.Orthogonal,
+                Direction = Direction.Right,
+                Length = 30,
+            };
+        OrthogonalSegment segment2 = new OrthogonalSegment()
+            {
+                Type = ConnectorSegmentType.Orthogonal,
+                Length = 300,
+                Direction = Direction.Bottom,
+            };
+        OrthogonalSegment segment3 = new OrthogonalSegment()
+            {
+                Type = ConnectorSegmentType.Orthogonal,
+                Length = 30,
+                Direction = Direction.Left,
+            };
+        OrthogonalSegment segment4 = new OrthogonalSegment()
+            {
+                Type = ConnectorSegmentType.Orthogonal,
+                Length = 200,
+                Direction = Direction.Top,
+            };
+        CreateConnector("Start", "Init");
+        CreateConnector("Init", "Condition");
+        CreateConnector("Condition", "Print");
+        CreateConnector("Condition", "End", "Yes", segment1, segment2);
+        CreateConnector("Print", "Increment", "No");
+        CreateConnector("Increment", "Condition", null, segment3, segment4);
+    }
+
+    // Method to create connector.
+    private void CreateConnector(string sourceId, string targetId, string label = default(string), OrthogonalSegment segment1 = null, OrthogonalSegment segment2 = null)
+    {
+        Connector diagramConnector = new Connector()
+            {
+                // Represents the unique id of the connector.
+                ID = string.Format("connector{0}", ++connectorCount),
+                SourceID = sourceId,
+                TargetID = targetId,
+            };
+        if (label != default(string))
+        {
+            // Represents the annotation of the connector.
+            PathAnnotation annotation = new PathAnnotation()
+                {
+                    Content = label,
+                    Style = new TextStyle() { Fill = "white" }
+                };
+            diagramConnector.Annotations = new DiagramObjectCollection<PathAnnotation>() { annotation };
+        }
+        if (segment1 != null)
+        {
+            // Represents the segment type of the connector.
+            diagramConnector.Type = ConnectorSegmentType.Orthogonal;
+            diagramConnector.Segments = new DiagramObjectCollection<ConnectorSegment> { segment1, segment2 };
+        }
+        connectors.Add(diagramConnector);
+    }
+
+    // Method to create node.
+    private void CreateNode(string id, double x, double y, NodeFlowShapes shape, string label)
+    {
+        Node diagramNode = new Node()
+            {
+                //Represents the unique id of the node.
+                ID = id,
+                // Defines the position of the node.
+                OffsetX = x,
+                OffsetY = y,
+                // Defines the size of the node.
+                Width = 145,
+                Height = 60,
+                // Defines the style of the node.
+                Style = new ShapeStyle { Fill = "#357BD2", StrokeColor = "White" },
+                // Defines the shape of the node.
+                Shape = new FlowShape() { Type = NodeShapes.Flow, Shape = shape },
+                // Defines the annotation collection of the node.
+                Annotations = new DiagramObjectCollection<ShapeAnnotation>
+            {
+                new ShapeAnnotation
+                {
+                    Content = label,
+                    Style = new TextStyle()
+                    {
+                        Color="White",
+                        Fill = "transparent"
+                    }
+                }
+            }
+            };
+        nodes.Add(diagramNode);
+    }
+}
+@{
+    var Tool = (new List<string>() { "Search", "Print" });
+}
+<SfGrid DataSource="@Orders"  Toolbar=@Tool />
+
+@code{
+    public List<Order> Orders { get; set; }
+
+    protected override void OnInitialized()
+    {
+        InitDiagramModel();
+        Orders = Enumerable.Range(1, 5).Select(x => new Order()
+        {
+            OrderID = 0 + x,
+            CustomerID = (new string[] { "ALFKI", "ANANTR", "ANTON", "BLONP", "BOLID" })[new Random().Next(5)],
+        }).ToList();
+    }
+
+    public class Order
+    {
+        public int? OrderID { get; set; }
+        public string CustomerID { get; set; }
+
+    }
+}
+<style>
+    .ulstyle {
+        margin-top: 10px;
+        margin-bottom: 20px;
+        display: inline-block;
+        list-style-type: none !important;
+        padding-left: 0px !important;
+    }
+
+    .controlregion {
+        margin-top: 50px;
+    }
+
+    .pagecontent {
+        font-family: sans-serif !important;
+font-size: 16px;
+color: #333333;
+letter-spacing: 0.34px;
+line-height: 24px;
+margin-top: 10px;
+    }
+    
+
+    .list {
+        float: left;
+        line-height: 40px;
+        min-width: 280px;
+        font-family: sans-serif !important;
+        font-size: 19px;
+        color: #0073DC;
+    }
+
+    .syncfusion-blazor-index-icons {
+        font-family: "sbicons";
+        color: #0073DC !important;
+        font-style: normal;
+        font-weight: normal;
+        font-variant: normal;
+        text-transform: none;
+        padding-right: 13px;
+        font-size: 18px;
+    }
+
+    .productheader {
+        font-family: sans-serif !important;
+        font-size: 19px !important;
+        color: #333333 !important;
+        letter-spacing: 0.41px ;
+    }
+
+    .pageheader {
+        font-family: sans-serif !important;
+        font-size: 24px !important;
+        color: #333333 ;
+        font-weight: bold !important;
+    }
+</style>

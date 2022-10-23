@@ -1,0 +1,123 @@
+﻿@page "/E"
+@using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor.Grids
+@using SyncfusionBlazorApp1.Data
+@using Syncfusion.Blazor.DropDowns
+
+@inject IDbContextFactory<DatabaseContext> DbFactory
+@inject DbContextOptions<DatabaseContext> dbOptions
+<SfGrid @ref="@DataGrid" TValue="User" ID="Grid1" AllowPaging="true" AllowFiltering="true" AllowReordering="true" AllowResizing="true" AllowGrouping="true" AllowExcelExport="true" AllowPdfExport="true" AllowSelection="true" AllowSorting="true" Toolbar="@(new List<string>() {"Add", "Edit", "Delete", "Cancel", "Update","ExcelExport","PdfExport","CsvExport", "Search"})">
+	<GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.Excel"></GridFilterSettings>
+
+    <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="Syncfusion.Blazor.Grids.EditMode.Normal"></GridEditSettings>
+    @* <GridFilterSettings Type="Syncfusion.Blazor.Grids.FilterType.FilterBar"></GridFilterSettings> *@
+    <GridPageSettings PageSizes="true"></GridPageSettings>
+    <SfDataManager AdaptorInstance="typeof(GridCustomAdaptor)" Adaptor="Adaptors.CustomAdaptor"></SfDataManager>
+    <GridSelectionSettings Type="Syncfusion.Blazor.Grids.SelectionType.Multiple"></GridSelectionSettings>
+    <GridEvents OnToolbarClick="@GridToolbarClick"  TValue="User"></GridEvents>
+    <GridColumns>
+      <GridColumn Type="ColumnType.CheckBox" Width="50"></GridColumn>
+    	<GridColumn Field=@nameof(User.Id) HeaderText="Id" AllowEditing="false" IsPrimaryKey="true" Width="150"></GridColumn>
+        <GridColumn Field=@nameof(User.Name) HeaderText="Name"  Width="150"></GridColumn>
+        <GridColumn Field=@nameof(User.Age) HeaderText="Age"  Width="150"></GridColumn>
+        <GridColumn Field=@nameof(User.Sex) HeaderText="Sex"  Width="150"></GridColumn>
+    </GridColumns>
+</SfGrid>
+
+@code {
+    SfGrid<User> DataGrid { get; set; }
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        GridCustomAdaptor.SfGridDataContext = DbFactory.CreateDbContext();
+    }
+   
+    /// <summary>
+    /// Event for Toolbar click for Grid Exporting
+    /// </summary>
+    public void GridToolbarClick(Syncfusion.Blazor.Navigations.ClickEventArgs args)
+    {
+        if (args.Item.Id == "Grid1_excelexport")
+        {
+            this.DataGrid.ExportToExcelAsync();
+        }
+        if (args.Item.Id == "Grid1_pdfexport")
+        {
+            this.DataGrid.ExportToPdfAsync();
+        }
+        if (args.Item.Id == "Grid1_csvexport")
+        {
+            this.DataGrid.ExportToCsvAsync();
+        }
+    }
+    public class GridCustomAdaptor : DataAdaptor
+    {
+        public static DatabaseContext SfGridDataContext;
+        /// <summary>
+    	/// Method for read data from database
+    	/// </summary>
+    	public override object Read(DataManagerRequest dm, string key = null)
+    	{
+    		IEnumerable<User> DataSource = SfGridDataContext.Users.ToList();
+    		if (dm.Search != null && dm.Search.Count > 0)
+    		{
+    		  // Searching
+    		  DataSource = DataOperations.PerformSearching(DataSource, dm.Search);
+    		}
+    		if (dm.Sorted != null && dm.Sorted.Count > 0)
+    		{
+    			// Sorting
+    			DataSource = DataOperations.PerformSorting(DataSource, dm.Sorted);
+    		}
+    		if (dm.Where != null && dm.Where.Count > 0)
+    		{
+    			// Filtering
+    			DataSource = DataOperations.PerformFiltering(DataSource, dm.Where, dm.Where[0].Operator);
+    		}
+    		int count = DataSource.Cast<User>().Count();
+    		if (dm.Skip != 0)
+    		{
+    			//Paging
+    			DataSource = DataOperations.PerformSkip(DataSource, dm.Skip);
+    		}
+    		if (dm.Take != 0)
+    		{
+    			DataSource = DataOperations.PerformTake(DataSource, dm.Take);
+    		}
+    		return dm.RequiresCounts ? new DataResult() { Result = DataSource, Count = count } : (object)DataSource;
+    	}
+    	/// <summary>
+    	/// Method for insert data to database
+    	/// </summary>
+    	public override object Insert(DataManager dataManager, object value, string key)
+    	{
+    		SfGridDataContext.Users.Add(value as User);
+    		SfGridDataContext.SaveChanges();
+    		return value;
+    	}
+    	/// <summary>
+    	/// Method for update data to database
+    	/// </summary>
+    	public override object Update(DataManager dataManager, object value, string keyField, string key)
+    	{
+    		var ModelValue = (value as User);
+            var data = SfGridDataContext.Users.Where(x => x.Id == ModelValue.Id).SingleOrDefault();
+    		data.Name = ModelValue.Name;
+            data.Age = ModelValue.Age;
+            data.Sex = ModelValue.Sex;
+            SfGridDataContext.SaveChanges();
+    		return value;
+    	}
+    	/// <summary>
+    	/// Method for remove data from database
+    	/// </summary>
+    	public override object Remove(DataManager dataManager, object value, string keyField, string key)
+    	{
+            User ord = SfGridDataContext.Users.Find((int)value);
+    		SfGridDataContext.Users.Remove(ord);
+    		SfGridDataContext.SaveChanges();
+    		return value;
+    	}
+    }
+}

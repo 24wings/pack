@@ -1,0 +1,25 @@
+﻿@page "/D"
+@using Microsoft.EntityFrameworkCore
+@using Syncfusion.Blazor.Grids
+@using SyncfusionBlazorApp1.Data
+@using System.Collections.ObjectModel
+@inject IDbContextFactory<DatabaseContext> DbFactory
+@if(users!=null){
+<h3>D</h3>
+            <SfGrid DataSource="@users" AllowPaging="true" >
+                
+</SfGrid>
+}
+@code {
+    public ObservableCollection<User> users { get; set; } 
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await  base.OnInitializedAsync();
+        var db = await DbFactory.CreateDbContextAsync();
+
+        users = new ObservableCollection<User>(db.Users);
+    }
+
+}
